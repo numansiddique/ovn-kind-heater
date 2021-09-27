@@ -1,0 +1,7 @@
+- name: Deploy k8s cluster with openshift-sdn using kind
+  hosts: kind_central
+  become: true
+  tasks:
+  - name: Deploy k8s cluster with openshift-sdn using kind
+    shell: |
+      ip a a 10.82.0.200/16 dev br-ovn

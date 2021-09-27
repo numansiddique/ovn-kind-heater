@@ -1,0 +1,15 @@
+- name: Deploy k8s cluster with ovn-k8s
+  hosts: kind_central
+  become: true
+  tasks:
+  - name: Deploy k8s cluster with ovn-k8s
+    shell: |
+      ip a a 10.82.0.200/16 dev br-ovn
+      if [ ! -d "$GOPATH/src/ovn-org/ovn-kubernetes" ]; then
+          git clone https://github.com/ovn-org/ovn-kubernetes $GOPATH/src/ovn-org/ovn-kubernetes
+      fi
+      pushd $GOPATH/src/ovn-org/ovn-kubernetes/contrib
+      export OVN_IMAGE="localhost/ovn-daemonset-f:dev"
+      export KIND_IPV4_SUPPORT=true
+      export OVN_HA=true
+      ./kind.sh 2>&1 | tee /root/kind_deploy.log

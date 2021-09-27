@@ -1,0 +1,7 @@
+- name: Pull latest ovn-k8s image
+  hosts: kind_nodes
+  tasks:
+    - name: Pull latest ovn-k8s image
+      shell: |
+              docker pull {{ registry_node }}:5000/ovn-daemonset-f:dev
+              docker tag {{ registry_node }}:5000/ovn-daemonset-f:dev localhost/ovn-daemonset-f:dev

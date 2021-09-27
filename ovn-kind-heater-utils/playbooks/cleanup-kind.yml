@@ -1,0 +1,9 @@
+- name: Cleanup kind
+  hosts: kind_nodes
+  become: true
+  tasks:
+  - name: Cleanup kind
+    shell: |
+      set -x
+      kind delete clusters ovn
+      ovs-vsctl --if-exist del-br br-int

@@ -1,0 +1,42 @@
+- name: Create OVN resources for kind
+  hosts: kind_central
+  become: true
+  tasks:
+  - name: Create OVN resources for kind
+    shell: |
+      ovn-nbctl ls-del kind
+      ovn-nbctl ls-del public
+      ovn-nbctl lr-del lr0
+      ovn-nbctl ls-add kind
+      ovn-nbctl lsp-add kind ln-kind
+      ovn-nbctl lsp-set-type ln-kind localnet
+      ovn-nbctl lsp-set-addresses ln-kind unknown
+      ovn-nbctl lsp-set-options ln-kind network_name=internal
+
+      ovn-nbctl ls-add public
+      ovn-nbctl lsp-add public ln-public
+      ovn-nbctl lsp-set-type ln-public localnet
+      ovn-nbctl lsp-set-addresses ln-public unknown
+      ovn-nbctl lsp-set-options ln-public network_name=public
+
+      ovn-nbctl lr-add lr0
+
+      ovn-nbctl lrp-add lr0 lr0-kind 0a:00:20:20:11:10 10.82.0.1/16
+      ovn-nbctl lsp-add kind kind-lr0
+      ovn-nbctl lsp-set-type kind-lr0 router
+      ovn-nbctl lsp-set-addresses kind-lr0 router
+      ovn-nbctl lsp-set-options kind-lr0 router-port=lr0-kind
+
+      ovn-nbctl lrp-add lr0 lr0-public 0a:00:20:20:12:13 {{ ovn_gw_ip }}/24
+      ovn-nbctl lsp-add public public-lr0
+      ovn-nbctl lsp-set-type public-lr0 router
+      ovn-nbctl lsp-set-addresses public-lr0 router
+      ovn-nbctl lsp-set-options public-lr0 router-port=lr0-public
+      ovn-nbctl lrp-set-gateway-chassis lr0-public controller 30
+      ovn-nbctl lr-nat-add lr0 snat {{ ovn_gw_ip }} 10.82.0.1/16
+      ovn-nbctl lr-route-add lr0 0.0.0.0/0 {{ ext_gw_ip }}
+
+      # Create lports for kind base cluster
+      ovn-nbctl lsp-add kind ovn-control-plane -- lsp-set-addresses ovn-control-plane "ae:01:00:00:00:02 10.82.0.2"
+      ovn-nbctl lsp-add kind ovn-worker -- lsp-set-addresses ovn-worker "ae:01:00:00:00:03 10.82.0.3"
+      ovn-nbctl lsp-add kind ovn-worker2 -- lsp-set-addresses ovn-worker2 "ae:01:00:00:00:04 10.82.0.4"

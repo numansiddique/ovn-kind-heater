@@ -1,0 +1,48 @@
+- name: Install dependencies
+  hosts: kind_nodes
+  tasks:
+    - name: Install required packages
+      shell: yum install git gcc python3-pip python3-pyyaml python3-virtualenv python3-devel containers-common --skip-broken -y
+    - name: Install container command
+      shell: yum install docker-ce --nobest -y || yum install docker -y || yum install podman podman-docker -y
+    - name: Install golang
+      shell: |
+        if ! which go
+        then
+            wget https://golang.org/dl/go1.17.1.linux-amd64.tar.gz
+            rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.1.linux-amd64.tar.gz
+            rm -f go1.17.1.linux-amd64.tar.gz
+        fi
+  
+    - name: Install j2cli
+      shell: pip3 install j2cli
+
+    - name: Install OVN packages
+      shell: |
+        if ! which ovs-vswitchd
+        then
+           curl http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/openvswitch-2.16.1-1.el8.x86_64.rpm -o /tmp/openvswitch-2.16.1-1.el8.x86_64.rpm
+           dnf install -y /tmp/openvswitch-2.16.1-1.el8.x86_64.rpm
+           rm -f /tmp/openvswitch-2.16.1-1.el8.x86_64.rpm
+        fi
+
+        if ! which ovn-controller
+        then
+           curl http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-21.09.0-1.el8.x86_64.rpm -o /tmp/ovn-21.09.0-1.el8.x86_64.rpm
+           curl http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-host-21.09.0-1.el8.x86_64.rpm -o /tmp/ovn-host-21.09.0-1.el8.x86_64.rpm
+           curl http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-central-21.09.0-1.el8.x86_64.rpm -o /tmp/ovn-central-21.09.0-1.el8.x86_64.rpm
+           dnf install -y /tmp/ovn*.rpm
+           rm -f /tmp/ovn*.rpm
+        fi
+
+    - name: Copy ovs-docker
+      copy:
+        src: "ovs-docker"
+        dest: /usr/local/bin/ovs-docker
+        mode: '0755'
+
+    - name: Install kubectl
+      shell: |
+         curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+         chmod +x ./kubectl
+         sudo mv ./kubectl /usr/local/bin/kubectl

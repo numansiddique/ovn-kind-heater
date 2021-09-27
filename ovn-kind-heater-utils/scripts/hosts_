@@ -1,0 +1,16 @@
+[kind_central]
+wsfd-advnetlab084.lab3.eng.bos.redhat.com ansible_user=root become=true internal_iface=eno1 node_name=ovn-scale ovn_central=true ovn_host_ip=10.16.223.136
+
+[kind_workers]
+wsfd-advnetlab085.lab3.eng.bos.redhat.com ansible_user=root become=true internal_iface=eno1 node_name=ovn-scale ovn_host_ip=10.16.223.138
+
+[kind_nodes:children]
+kind_central
+kind_workers
+
+[kind_nodes:vars]
+registry_node=10.22.11.27
+rundir=/home/nusiddiq/workspace_cpp/ovn-org/ovn-kind-heater/runtime
+ovn_central_ip=10.16.223.136
+ovn_gw_ip=10.16.223.240
+ext_gw_ip=10.16.223.254

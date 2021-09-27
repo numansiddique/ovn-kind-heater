@@ -1,0 +1,49 @@
+- name: Change system-id of kind master
+  hosts: kind_central
+  become: true
+  tasks:
+  - name: Change system-id of kind master
+    shell: |
+       echo "controller" > /etc/openvswitch/system-id.conf
+
+- name: Prepare the setup
+  hosts: kind_nodes
+  become: true
+  tasks:
+  - name: Start openvswitch
+    systemd:
+      name: openvswitch
+      state: started
+
+- name: Setup OVN control plane
+  hosts: kind_central
+  become: true
+  tasks:
+  - name: Start ovn-northd
+    systemd:
+      name: ovn-northd
+      state: started
+
+  - name: Configure ovn dbs
+    shell: |
+      ovn-nbctl set-connection ptcp:6641
+      ovn-sbctl set-connection ptcp:6642
+
+- name: Setup ovn-controllers
+  hosts: kind_nodes
+  become: true
+  tasks:
+  - name: Start ovn-controller
+    systemd:
+      name: ovn-controller
+      state: started
+
+  - name: Configure ovn-controller
+    shell: |
+      ovs-vsctl set open . external_ids:ovn-encap-type=geneve
+      ovs-vsctl set open . external_ids:ovn-encap-ip={{ ovn_host_ip }}
+      ovs-vsctl set open . external_ids:ovn-remote=tcp:{{ ovn_central_ip }}:6642
+      ovs-vsctl set open . external_ids:ovn-bridge-mappings="internal:br-ovn,public:br-ex"
+      ovs-vsctl --may-exist add-br br-ovn
+      ovs-vsctl --may-exist add-br br-ex
+      ovs-vsctl --may-exist add-port br-ovn {{ internal_iface }}

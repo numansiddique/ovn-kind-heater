@@ -1,0 +1,23 @@
+- name: Setup kind
+  hosts: kind_nodes
+  become: true
+  tasks:
+  - name: Setup kind
+    shell: |
+      set -x
+      export GOPATH=/root/go
+      if [ ! -d "$GOPATH/src/kubernetes-sigs/kind" ]; then
+          git clone https://github.com/numansiddique/kind.git $GOPATH/src/kubernetes-sigs/kind/
+      else
+          pushd $GOPATH/src/kubernetes-sigs/kind/
+          git fetch origin
+          git branch -m tmp
+          git checkout -b join_support origin/join_support
+          git branch -D tmp
+          popd
+      fi
+      pushd $GOPATH/src/kubernetes-sigs/kind/
+      make
+      make install
+      ln -s $GOPATH/bin/kind /usr/local/bin/kind
+      popd

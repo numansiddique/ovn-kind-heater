@@ -1,0 +1,10 @@
+registry-node: 10.22.11.27
+internal-iface: eno1
+ovn-gw-ip: 10.16.223.240
+ext-gw-ip: 10.16.223.254
+
+central-node:
+  name: wsfd-advnetlab084.lab3.eng.bos.redhat.com
+
+worker-nodes:
+  - wsfd-advnetlab085.lab3.eng.bos.redhat.com

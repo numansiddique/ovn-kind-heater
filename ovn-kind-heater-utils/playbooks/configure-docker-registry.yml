@@ -1,0 +1,17 @@
+- name: Configure docker
+  hosts: kind_nodes
+  become: true
+  tasks:
+  - name: Start docker
+    systemd:
+      name: docker
+      state: started
+
+  - name: Configure insecure docker registry
+    copy:
+      src: "{{ rundir }}/docker-daemon.json"
+      dest: /etc/docker/daemon.json
+
+  - name: Restart docker
+    shell: |
+      systemctl restart docker

@@ -1,0 +1,27 @@
+- name: Check k8s cluster readiness
+  hosts: kind_central
+  become: true
+  tasks:
+  - name: Check k8s cluster readiness
+    shell: |
+      export KUBECONFIG=/root/admin.conf
+      while true
+      do
+         oc get nodes | grep NotReady
+         if [ "$?" != "0" ]; then
+             break
+         fi
+         sleep 1
+      done
+
+  - name: Label nodes as workers
+    shell: |
+      export KUBECONFIG=/root/admin.conf
+      while true
+      do
+         oc get nodes | grep NotReady
+         if [ "$?" != "0" ]; then
+             break
+         fi
+         sleep 1
+      done
