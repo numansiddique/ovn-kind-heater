@@ -7,7 +7,7 @@
       export KUBECONFIG=/root/admin.conf
       while true
       do
-         oc get nodes | grep NotReady
+         kubectl get nodes | grep NotReady
          if [ "$?" != "0" ]; then
              break
          fi
@@ -17,11 +17,8 @@
   - name: Label nodes as workers
     shell: |
       export KUBECONFIG=/root/admin.conf
-      while true
+      for i in $(kubectl get nodes | grep worker | grep -v ovn-worker2 | awk '{print $1}')
       do
-         oc get nodes | grep NotReady
-         if [ "$?" != "0" ]; then
-             break
-         fi
-         sleep 1
+          kubectl label nodes $i node-role.kubernetes.io/worker='' --overwrite
       done
+      kubectl label node/ovn-worker node-role.kubernetes.io/worker-

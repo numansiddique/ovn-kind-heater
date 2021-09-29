@@ -16,11 +16,3 @@
       name: ovn-controller
       state: stopped
 
-- name: Stop openvswitch
-  hosts: kind_workers
-  become: true
-  tasks:
-  - name: Stop openvswitch
-    systemd:
-      name: openvswitch
-      state: stopped

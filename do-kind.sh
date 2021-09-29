@@ -183,6 +183,9 @@ function install() {
 }
 
 function deploy() {
+    echo "--Starting OVN services on kind nodes"
+    ansible-playbook ${ovn_kh_playbooks}/start-ovn-underlay.yml -i ${hosts_file}
+
     echo "--Deploying base k8s cluster on central node"
     ansible-playbook ${ovn_kh_playbooks}/deploy-ovn-k8s-kind.yml -i ${hosts_file}
 
@@ -197,6 +200,7 @@ function deploy() {
 
 function cleanup_kind() {
     ansible-playbook ${ovn_kh_playbooks}/cleanup-kind.yml -i ${hosts_file}
+    ansible-playbook ${ovn_kh_playbooks}/stop-ovn-underlay.yml -i ${hosts_file}
 }
 
 function run() {

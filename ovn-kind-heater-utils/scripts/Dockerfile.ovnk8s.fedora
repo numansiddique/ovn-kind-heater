@@ -76,6 +76,11 @@ RUN ovn-nbctl --version && ovn-sbctl --version
 RUN mkdir -p /var/run/openvswitch && \
     mkdir -p /usr/libexec/cni/
 
+
+WORKDIR /
+RUN rm -rf /root/ovs
+RUN rm -rf /root/ovn
+
 COPY ovnkube ovn-kube-util ovndbchecker /usr/bin/
 COPY ovn-k8s-cni-overlay /usr/libexec/cni/ovn-k8s-cni-overlay
 
