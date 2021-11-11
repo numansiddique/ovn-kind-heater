@@ -8,6 +8,7 @@
       export GOPATH=/root/go
       if [ ! -d "$GOPATH/src/kubernetes-sigs/kind" ]; then
           git clone https://github.com/numansiddique/kind.git $GOPATH/src/kubernetes-sigs/kind/
+          git checkout -b join_support origin/join_support
       else
           pushd $GOPATH/src/kubernetes-sigs/kind/
           git fetch origin

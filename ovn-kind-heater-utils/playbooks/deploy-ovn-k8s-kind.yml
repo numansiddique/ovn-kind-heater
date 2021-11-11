@@ -5,6 +5,7 @@
   - name: Deploy k8s cluster with ovn-k8s
     shell: |
       ip a a 10.82.0.2/16 dev br-ovn
+      export GOPATH=/root/go
       if [ ! -d "$GOPATH/src/ovn-org/ovn-kubernetes" ]; then
           git clone https://github.com/ovn-org/ovn-kubernetes $GOPATH/src/ovn-org/ovn-kubernetes
       fi
