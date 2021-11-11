@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -o errexit
+set -x
 
 topdir=$(pwd)
 rundir=${topdir}/runtime
@@ -25,6 +26,8 @@ ovn_branch="${OVN_BRANCH:-main}"
 ovn_k8s_repo="${OVN_K8S_REPO:-https://github.com/ovn-org/ovn-kubernetes.git}"
 ovn_k8s_branch="${OVN_K8S_BRANCH:-master}"
 
+os_image=${OS_IMAGE:-"registry.fedoraproject.org/fedora:35"}
+
 function die() {
     echo $1
     exit 1
@@ -43,8 +46,9 @@ function clone_component() {
     local comp_name=$1
     local comp_repo=$2
     local comp_branch=$3
+    local clonedir=$4
 
-    pushd ${rundir}
+    pushd ${clonedir}
     local comp_exists="0"
     if [ -d ${comp_name} ]; then
         pushd ${comp_name}
@@ -146,21 +150,68 @@ function create_ovn_underlay_resources() {
 }
 
 function build_ovn_k8s_image() {
-    echo "-- Building OVN K8s image"
-    clone_component ovn-kubernetes ${ovn_k8s_repo} ${ovn_k8s_branch}
-    pushd ${rundir}/ovn-kubernetes
-    pushd go-controller
-    echo "-- Compiling OVN K8s"
-    make
+    pushd ${rundir}
+    mkdir -p ovn-k8s-image-bin
+    pushd ovn-k8s-image-bin
+    clone_component ovn-kubernetes ${ovn_k8s_repo} ${ovn_k8s_branch} ${rundir}/ovn-k8s-image-bin
+    clone_component ovs ${ovs_repo} ${ovs_branch} ${rundir}/ovn-k8s-image-bin
+    clone_component ovn ${ovn_repo} ${ovn_branch} ${rundir}/ovn-k8s-image-bin
     popd
-    pushd dist/images
-    # Find all built executables, but ignore the 'windows' directory if it exists
-    echo "-- Copying OVN K8s binaries"
-    find ../../go-controller/_output/go/bin/ -maxdepth 1 -type f -exec cp -f {} . \;
-    echo "ref: $(git rev-parse  --symbolic-full-name HEAD)  commit: $(git rev-parse  HEAD)" > git_info
+
+    cat > ovn-k8s-image-bin/build_ovn_k8s.sh << EOF
+#!/bin/bash
+
+set -x
+
+dnf upgrade -y && dnf install --best --refresh -y --setopt=tsflags=nodocs \
+	python3-pyyaml bind-utils procps-ng openssl numactl-libs firewalld-filesystem \
+        libpcap hostname kubernetes-client python3-openvswitch python3-pyOpenSSL  \
+        iptables iproute iputils strace socat\
+	@'Development Tools' rpm-build dnf-plugins-core kmod && \
+	dnf clean all && rm -rf /var/cache/dnf/*
+
+dnf install -y autoconf automake libtool make golang openssl-devel
+dnf install -y checkpolicy desktop-file-utils gcc-c++ groff libcap-ng-devel \
+    python3-devel  selinux-policy-devel unbound unbound-devel python3-sphinx
+echo "Building OVS"
+
+pushd /root/sources/ovs
+./boot.sh
+./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc --enable-ssl
+make rpm-fedora
+rm -rf /root/sources/bin
+mkdir -p /root/sources/bin
+cp rpm/rpmbuild/RPMS/x86_64/openvswitch-2*.rpm /root/sources/bin/
+popd
+
+pushd /root/sources/ovn
+./boot.sh
+./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc --with-ovs-source=/root/sources/ovs
+make rpm-fedora
+cp rpm/rpmbuild/RPMS/x86_64/ovn*.rpm /root/sources/bin/
+rm -f /root/sources/bin/*debug*.rpm
+rm -f /root/sources/bin/ovn-docker*.rpm
+rm -f /root/sources/bin/ovn-vtep*.rpm
+popd
+
+pushd /root/sources/ovn-kubernetes/go-controller
+make
+cp _output/go/bin/* /root/sources/bin/
+cp ../dist/images/ovnkube.sh /root/sources/bin/
+cp ../dist/images/ovndb-raft-functions.sh /root/sources/bin/
+cp -rf ../dist/images/iptables-scripts /root/sources/bin/
+EOF
+
+    chmod 0755 ovn-k8s-image-bin/build_ovn_k8s.sh
+    docker rm -f ovn_image_build || :
+    docker run --privileged --network=host -v ${rundir}/ovn-k8s-image-bin:/root/sources --name ovn_image_build -it ${os_image} /root/sources/build_ovn_k8s.sh
+    docker rm -f ovn_image_build
+    popd
+
+    pushd ${rundir}/ovn-k8s-image-bin/bin
     cp ${ovn_k8s_docker_file} .
     echo "-- Building OVN K8s docker image"
-    docker build -t ovn-daemonset-f:dev  --build-arg OVN_REPO=${ovn_repo} --build-arg OVN_BRANCH=${ovn_branch} --build-arg OVS_REPO=${ovs_repo} --build-arg OVS_BRANCH=${ovs_branch} -f ${ovn_k8s_docker_file} .
+    docker build -t ovn-daemonset-f:dev  --build-arg OS_IMAGE=${os_image} -f ${ovn_k8s_docker_file} .
     docker tag ovn-daemonset-f:dev localhost:5000/ovn-daemonset-f:dev
     docker push localhost:5000/ovn-daemonset-f:dev
 }
@@ -210,7 +261,7 @@ function cleanup_kind() {
 }
 
 function run() {
-    echo "run"
+
 }
 
 function usage() {
@@ -276,8 +327,8 @@ case "${1:-"usage"}" in
         cleanup_kind
         ;;
     "run")
+        run
         ;;
-    
     *)
         usage $0
         ;;
