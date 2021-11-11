@@ -37,9 +37,12 @@ function generate() {
     # Make sure rundir exists.
     mkdir -p ${rundir}
 
+    install_venv
+    source ${ovn_kh_venv}/bin/activate
     PYTHONPATH=${topdir}/utils ${ovn_khosts_generate} ${phys_deployment} ${rundir} > ${hosts_file}
     # PYTHONPATH=${topdir}/utils ${ovn_fmn_docker} ${phys_deployment} > ${docker_daemon_file}
     # PYTHONPATH=${topdir}/utils ${ovn_fmn_podman} ${phys_deployment} > ${podman_registry_file}
+    deactivate
 }
 
 function clone_component() {
@@ -225,7 +228,6 @@ function setup_kind() {
 function install() {
     pushd ${rundir}
     install_deps
-    install_venv
     configure_docker
     popd
 }
@@ -261,7 +263,7 @@ function cleanup_kind() {
 }
 
 function run() {
-
+    echo "run"
 }
 
 function usage() {
@@ -295,7 +297,6 @@ case "${1:-"usage"}" in
 case "${1:-"usage"}" in
     "install")
         generate
-
         # Store current environment variables.
         (
             echo "Environment:"
