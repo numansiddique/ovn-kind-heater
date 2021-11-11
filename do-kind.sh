@@ -21,7 +21,7 @@ ovn_kind_heater_log_file=test-log
 ovs_repo="${OVS_REPO:-https://github.com/openvswitch/ovs.git}"
 ovs_branch="${OVS_BRANCH:-master}"
 ovn_repo="${OVN_REPO:-https://github.com/ovn-org/ovn.git}"
-ovn_branch="${OVN_BRANCH:-master}"
+ovn_branch="${OVN_BRANCH:-main}"
 ovn_k8s_repo="${OVN_K8S_REPO:-https://github.com/ovn-org/ovn-kubernetes.git}"
 ovn_k8s_branch="${OVN_K8S_BRANCH:-master}"
 
@@ -166,6 +166,7 @@ function build_ovn_k8s_image() {
 }
 
 function setup_kind() {
+    echo "-- Setting up kind on the nodes"
     ansible-playbook ${ovn_kh_playbooks}/pull-ovn-k8s-image.yml -i ${hosts_file}
     ansible-playbook ${ovn_kh_playbooks}/setup-kind.yml -i ${hosts_file}
 }
@@ -174,7 +175,12 @@ function install() {
     pushd ${rundir}
     install_deps
     install_venv
-    #configure_docker
+    configure_docker
+    popd
+}
+
+function setup() {
+    pushd ${rundir}
     install_ovn_underlay
     build_ovn_k8s_image
     setup_kind
@@ -208,7 +214,7 @@ function run() {
 }
 
 function usage() {
-    die "Usage: $0 install|generate|init|run <scenario> <out-dir>"
+    die "Usage: $0 install|setup|init|deploy|cleanup|run <scenario> <out-dir>"
 }
 
 do_lockfile=/tmp/do-kind.sh.lock
@@ -223,7 +229,11 @@ case "${1:-"usage"}" in
         ;&
     "generate")
         ;&
+    "setup")
+        ;&
     "init")
+        ;&
+    "deploy")
         ;&
     "run")
         take_lock $0
@@ -252,6 +262,9 @@ case "${1:-"usage"}" in
         ;;
     "generate")
         generate
+        ;;
+    "setup")
+        setup
         ;;
     "init")
         cleanup_kind

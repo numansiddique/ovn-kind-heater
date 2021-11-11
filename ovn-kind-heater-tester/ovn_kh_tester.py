@@ -95,7 +95,7 @@ def _get_worker_mac(worker_id):
 
 def create_worker_nodes(workers, central, n_workers):
     kind_network = netaddr.IPNetwork('10.82.0.0/16')
-    worker_ip = kind_network.ip + 5
+    worker_ip = kind_network.ip + 6
     nb_remote = "tcp:" + central.hostname + ":6641"
     worker_nodes = [
         WorkerNode(workers[i % len(workers)], f'ovn-worker{i + 3}',
@@ -117,7 +117,6 @@ if __name__ == '__main__':
         usage(sys.argv[0])
         sys.exit(1)
 
-    print('Hello . ')
     central, workers = read_physical_deployment(sys.argv[1])
     print('central nodes = ' + str(central))
     print('worker nodes = ' + str(workers))
