@@ -37,6 +37,6 @@
       ovn-nbctl lr-route-add lr0 0.0.0.0/0 {{ ext_gw_ip }}
 
       # Create lports for kind base cluster
-      ovn-nbctl lsp-add kind ovn-control-plane -- lsp-set-addresses ovn-control-plane "ae:01:00:00:00:02 10.82.0.2"
-      ovn-nbctl lsp-add kind ovn-worker -- lsp-set-addresses ovn-worker "ae:01:00:00:00:03 10.82.0.3"
-      ovn-nbctl lsp-add kind ovn-worker2 -- lsp-set-addresses ovn-worker2 "ae:01:00:00:00:04 10.82.0.4"
+      ovn-nbctl lsp-add kind ovn-control-plane -- lsp-set-addresses ovn-control-plane "ae:01:00:00:00:02 10.82.0.3"
+      ovn-nbctl lsp-add kind ovn-worker -- lsp-set-addresses ovn-worker "ae:01:00:00:00:03 10.82.0.4"
+      ovn-nbctl lsp-add kind ovn-worker2 -- lsp-set-addresses ovn-worker2 "ae:01:00:00:00:04 10.82.0.5"

@@ -21,16 +21,16 @@
       shell: |
         if ! which ovs-vswitchd
         then
-           curl http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/openvswitch-2.16.1-1.el8.x86_64.rpm -o /tmp/openvswitch-2.16.1-1.el8.x86_64.rpm
-           dnf install -y /tmp/openvswitch-2.16.1-1.el8.x86_64.rpm
-           rm -f /tmp/openvswitch-2.16.1-1.el8.x86_64.rpm
+           curl http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/openvswitch-2.16.2-1.el8.x86_64.rpm -o /tmp/openvswitch-2.16.2-1.el8.x86_64.rpm
+           dnf install -y /tmp/openvswitch-2.16.2-1.el8.x86_64.rpm
+           rm -f /tmp/openvswitch-2.16.2-1.el8.x86_64.rpm
         fi
 
         if ! which ovn-controller
         then
-           wget http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-21.09.0-1.el8.x86_64.rpm
-           wget http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-host-21.09.0-1.el8.x86_64.rpm
-           wget http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-central-21.09.0-1.el8.x86_64.rpm
+           wget http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-21.09.2-1.el8.x86_64.rpm
+           wget http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-host-21.09.2-1.el8.x86_64.rpm
+           wget http://wsfd-advnetlab087.lab3.eng.bos.redhat.com:8080/rpms/ovn-central-21.09.2-1.el8.x86_64.rpm
            dnf install -y ovn*.rpm
            rm -f ovn*.rpm
         fi

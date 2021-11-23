@@ -26,7 +26,7 @@ ovn_branch="${OVN_BRANCH:-main}"
 ovn_k8s_repo="${OVN_K8S_REPO:-https://github.com/ovn-org/ovn-kubernetes.git}"
 ovn_k8s_branch="${OVN_K8S_BRANCH:-master}"
 
-os_image=${OS_IMAGE:-"registry.fedoraproject.org/fedora:35"}
+os_image=${OS_IMAGE:-"registry.fedoraproject.org/fedora:32"}
 
 function die() {
     echo $1
@@ -38,8 +38,9 @@ function generate() {
     mkdir -p ${rundir}
 
     install_venv
+    pushd ${rundir}
     source ${ovn_kh_venv}/bin/activate
-    PYTHONPATH=${topdir}/utils ${ovn_khosts_generate} ${phys_deployment} ${rundir} > ${hosts_file}
+    PYTHONPATH=${topdir}/utils python ${ovn_khosts_generate} ${phys_deployment} ${rundir} > ${hosts_file}
     # PYTHONPATH=${topdir}/utils ${ovn_fmn_docker} ${phys_deployment} > ${docker_daemon_file}
     # PYTHONPATH=${topdir}/utils ${ovn_fmn_podman} ${phys_deployment} > ${podman_registry_file}
     deactivate
@@ -173,7 +174,7 @@ dnf upgrade -y && dnf install --best --refresh -y --setopt=tsflags=nodocs \
 	@'Development Tools' rpm-build dnf-plugins-core kmod && \
 	dnf clean all && rm -rf /var/cache/dnf/*
 
-dnf install -y autoconf automake libtool make golang openssl-devel
+dnf install -y autoconf automake libtool make openssl-devel wget
 dnf install -y checkpolicy desktop-file-utils gcc-c++ groff libcap-ng-devel \
     python3-devel  selinux-policy-devel unbound unbound-devel python3-sphinx
 echo "Building OVS"
@@ -196,6 +197,12 @@ rm -f /root/sources/bin/*debug*.rpm
 rm -f /root/sources/bin/ovn-docker*.rpm
 rm -f /root/sources/bin/ovn-vtep*.rpm
 popd
+
+# Install golang
+wget https://golang.org/dl/go1.17.1.linux-amd64.tar.gz
+rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.1.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
+go version
 
 pushd /root/sources/ovn-kubernetes/go-controller
 make
